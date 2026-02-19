@@ -1,0 +1,2 @@
+Hello from the first file.
+This file has two lines.

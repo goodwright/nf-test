@@ -1,0 +1,36 @@
+{
+  "inputs": [
+    {
+      "name": "Samples",
+      "description": "The individual text files to process with word count",
+      "required": true,
+      "type": "csv",
+      "takes_samples": true,
+      "sample_types": ["Word-Count"],
+      "columns": [
+        {
+          "name": "name",
+          "type": "string",
+          "from_sample": "name",
+          "required": true,
+          "render": false
+        },
+        {
+          "name": "file_path",
+          "type": "data",
+          "from_sample": 1,
+          "required": true,
+          "render": false
+        }
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "Word counts",
+      "description": "The output of `wc` for a given file.",
+      "filetype": "txt",
+      "process": "validate_and_wc"
+    }
+  ]
+}
