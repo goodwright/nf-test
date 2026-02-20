@@ -1,28 +1,38 @@
 {
   "inputs": [
     {
-      "name": "Samples",
+      "name": "Sample options",
       "description": "The individual text files to process with word count",
-      "required": true,
-      "type": "csv",
-      "takes_samples": true,
-      "sample_types": ["Word-Count"],
-      "columns": [
-        {
-          "name": "name",
-          "type": "string",
-          "from_sample": "name",
+      "advanced": false,
+      "params": {
+        "input": {
+          "name": "Samples",
+          "description": "The individual text files to process with word count",
           "required": true,
-          "render": false
-        },
-        {
-          "name": "file_path",
-          "type": "data",
-          "from_sample": 1,
-          "required": true,
-          "render": false
+          "type": "csv",
+          "takes_samples": true,
+          "sample_types": [
+            "Word-Count"
+          ],
+          "columns": [
+            {
+              "name": "Name",
+              "param": "name",
+              "type": "string",
+              "from_sample": "name",
+              "required": true,
+              "render": false
+            },
+            {
+              "name": "file_path",
+              "type": "data",
+              "from_sample": 1,
+              "required": true,
+              "render": false
+            }
+          ]
         }
-      ]
+      }
     }
   ],
   "outputs": [
