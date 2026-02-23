@@ -1,0 +1,39 @@
+{
+  "inputs": [
+    {
+      "name": "Flags",
+      "description": "Boolean flags to print",
+      "advanced": false,
+      "params": {
+        "flag_a": {
+          "name": "Flag A",
+          "description": "First boolean flag",
+          "required": false,
+          "type": "boolean",
+          "default": true
+        },
+        "flag_b": {
+          "name": "Flag B",
+          "description": "Second boolean flag",
+          "required": false,
+          "type": "boolean",
+          "default": false
+        },
+        "flag_c": {
+          "name": "Flag C",
+          "description": "Third boolean flag",
+          "required": false,
+          "type": "boolean"
+        }
+      }
+    }
+  ],
+  "outputs": [
+    {
+      "name": "Parameter values",
+      "description": "A text file containing the value of each boolean flag",
+      "filetype": "txt",
+      "process": "print_params"
+    }
+  ]
+}
