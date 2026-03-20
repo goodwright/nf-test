@@ -1,0 +1,5 @@
+Sample B is different.
+It has five lines.
+More content here.
+And even more.
+Last line of sample B.

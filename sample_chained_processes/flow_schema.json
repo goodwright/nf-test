@@ -1,0 +1,50 @@
+{
+  "inputs": [
+    {
+      "name": "Sample options",
+      "description": "Samples to process",
+      "params": {
+        "input": {
+          "name": "Samples",
+          "description": "Text files associated with samples",
+          "required": true,
+          "type": "csv",
+          "takes_samples": true,
+          "sample_types": [
+            "Text-Processing"
+          ],
+          "columns": [
+            {
+              "name": "name",
+              "type": "string",
+              "from_sample": "name",
+              "required": true,
+              "render": false
+            },
+            {
+              "name": "file_path",
+              "type": "data",
+              "from_sample": 1,
+              "required": true,
+              "render": false
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "outputs": [
+    {
+      "name": "Processed files",
+      "description": "Character count files per sample.",
+      "filetype": "txt",
+      "process": "PROCESS_SAMPLE"
+    },
+    {
+      "name": "Summary files",
+      "description": "Summary reports per sample.",
+      "filetype": "txt",
+      "process": "SUMMARIZE_SAMPLE"
+    }
+  ]
+}

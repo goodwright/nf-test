@@ -1,0 +1,37 @@
+{
+  "inputs": [
+    {
+      "name": "File options",
+      "description": "Input file to process",
+      "params": {
+        "input_file": {
+          "name": "Input file",
+          "type": "data",
+          "pattern": "txt$",
+          "required": true,
+          "description": "A plain text file to process."
+        }
+      }
+    }
+  ],
+  "outputs": [
+    {
+      "name": "Uppercased file",
+      "description": "The input file with all text converted to uppercase.",
+      "filetype": "txt",
+      "process": "UPPERCASE"
+    },
+    {
+      "name": "Line count",
+      "description": "A file containing the number of lines in the input.",
+      "filetype": "txt",
+      "process": "LINE_COUNT"
+    },
+    {
+      "name": "Report",
+      "description": "A summary report directory.",
+      "filetype": "",
+      "process": "REPORT"
+    }
+  ]
+}
