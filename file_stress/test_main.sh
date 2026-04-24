@@ -73,6 +73,16 @@ else
     report "FAIL" "pipeline runs with zero scratch"
 fi
 
+echo ""
+echo "=== Test: Filename padding inflates declared-output filenames ==="
+cleanup
+if nextflow run "$PROJECT_DIR/main.nf" --num_processes 2 --curated_outputs_per_process 1 --process_outputs_per_process 0 --scratch_files_per_process 0 --enable_aggregator false --filename_padding_chars 50 -w "$WORK_DIR" 2>/dev/null; then
+    padded=$(find "$WORK_DIR" -type f -name 'curated_*xxxxxxxxxx*.txt' 2>/dev/null | wc -l | tr -d ' ')
+    [ "$padded" = "2" ] && report "PASS" "2 padded curated filenames" || report "FAIL" "2 padded curated filenames (got $padded)"
+else
+    report "FAIL" "pipeline runs with padding"
+fi
+
 cleanup
 
 echo ""

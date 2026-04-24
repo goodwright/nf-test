@@ -38,6 +38,13 @@
           "required": false,
           "type": "boolean",
           "default": true
+        },
+        "filename_padding_chars": {
+          "name": "Filename padding chars",
+          "description": "Extra characters appended to each declared-output filename; inflates path length so Flow's batch_file_metadata rendered script grows faster. Useful for triggering ARG_MAX overflow with fewer processes.",
+          "required": false,
+          "type": "integer",
+          "default": 0
         }
       }
     }
