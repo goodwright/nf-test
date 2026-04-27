@@ -1,0 +1,66 @@
+{
+  "inputs": [
+    {
+      "name": "Scale parameters",
+      "description": "Control how many process executions and files are created",
+      "params": {
+        "num_processes": {
+          "name": "Number of processes",
+          "description": "How many GENERATE_FILES instances to run in parallel",
+          "required": false,
+          "type": "integer",
+          "default": 3
+        },
+        "curated_outputs_per_process": {
+          "name": "Curated outputs per process",
+          "description": "Declared outputs named in this schema (captured as curated execution output)",
+          "required": false,
+          "type": "integer",
+          "default": 2
+        },
+        "process_outputs_per_process": {
+          "name": "Process outputs per process",
+          "description": "Declared outputs NOT named in this schema (captured per-process but not curated)",
+          "required": false,
+          "type": "integer",
+          "default": 3
+        },
+        "scratch_files_per_process": {
+          "name": "Scratch files per process",
+          "description": "Files created in the work dir but not declared as outputs; purged by Flow",
+          "required": false,
+          "type": "integer",
+          "default": 100
+        },
+        "enable_aggregator": {
+          "name": "Enable aggregator",
+          "description": "When true, adds a downstream AGGREGATE process that consumes the curated outputs",
+          "required": false,
+          "type": "boolean",
+          "default": true
+        },
+        "filename_padding_chars": {
+          "name": "Filename padding chars",
+          "description": "Extra characters appended to each declared-output filename; inflates path length so Flow's batch_file_metadata rendered script grows faster. Useful for triggering ARG_MAX overflow with fewer processes.",
+          "required": false,
+          "type": "integer",
+          "default": 0
+        }
+      }
+    }
+  ],
+  "outputs": [
+    {
+      "name": "Curated files",
+      "description": "Small text files from each generator process",
+      "filetype": "txt",
+      "process": "GENERATE_FILES"
+    },
+    {
+      "name": "Aggregate summary",
+      "description": "Summary listing of all curated files (only produced when the aggregator is enabled)",
+      "filetype": "txt",
+      "process": "AGGREGATE"
+    }
+  ]
+}
