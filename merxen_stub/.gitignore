@@ -1,0 +1,8 @@
+work/
+results/
+results_*/
+.nextflow*
+test/work/
+test/results_*/
+test/.nextflow*
+test/.samplesheet_*.csv

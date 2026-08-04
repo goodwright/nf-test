@@ -1,0 +1,307 @@
+{
+  "inputs": [
+    {
+      "name": "Samples",
+      "description": "One row per tissue block / adjacent-section pair. Raw platform inputs are directories: on Flow they are selected as data and materialised to a path the pipeline reads.",
+      "params": {
+        "samplesheet": {
+          "name": "Samplesheet",
+          "description": "CSV with one row per pair_id. Directory columns point at raw MERSCOPE/Xenium export folders or reusable SpatialData .zarr stores.",
+          "required": true,
+          "type": "csv",
+          "takes_samples": true,
+          "allow_custom_columns": true,
+          "columns": [
+            {
+              "name": "pair_id",
+              "type": "string",
+              "from_sample": "name",
+              "required": true,
+              "render": true
+            },
+            {
+              "name": "analysis_mode",
+              "type": "string",
+              "valid": ["paired", "merscope", "xenium"],
+              "required": false,
+              "render": true
+            },
+            {
+              "name": "merscope_dir",
+              "description": "Raw MERSCOPE region export directory (transcripts.parquet, cell_boundaries/, images/, ...).",
+              "type": "data",
+              "required": false,
+              "render": true
+            },
+            {
+              "name": "xenium_dir",
+              "description": "Raw Xenium export directory.",
+              "type": "data",
+              "required": false,
+              "render": true
+            },
+            {
+              "name": "merscope_spatialdata_path",
+              "description": "Reusable MERSCOPE SpatialData .zarr directory (skips build when present).",
+              "type": "data",
+              "pattern": "zarr$",
+              "required": false,
+              "render": true
+            },
+            {
+              "name": "xenium_spatialdata_path",
+              "description": "Reusable Xenium SpatialData .zarr directory.",
+              "type": "data",
+              "pattern": "zarr$",
+              "required": false,
+              "render": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Reference data",
+      "description": "Assets MerXen hardcodes as absolute paths on the workstation. On Flow they are provided as data inputs. Required only for the stages that consume them (MECR, hierarchical clustering annotation, MapMyCells).",
+      "advanced": true,
+      "params": {
+        "mecr_neurons_h5ad_path": {
+          "name": "WHB neurons H5AD",
+          "description": "Whole-brain 10Xv3 neuron raw expression matrix (MECR reference).",
+          "type": "data",
+          "required": false
+        },
+        "mecr_nonneurons_h5ad_path": {
+          "name": "WHB non-neurons H5AD",
+          "description": "Whole-brain 10Xv3 non-neuron raw expression matrix (MECR reference).",
+          "type": "data",
+          "required": false
+        },
+        "mecr_cell_metadata_path": {
+          "name": "WHB cell metadata",
+          "description": "Whole-brain reference cell metadata CSV (MECR).",
+          "type": "data",
+          "required": false
+        },
+        "mecr_taxonomy_metadata_path": {
+          "name": "WHB taxonomy metadata",
+          "description": "Cluster annotation term metadata CSV (MECR + clustering annotation).",
+          "type": "data",
+          "required": false
+        },
+        "mecr_cluster_membership_path": {
+          "name": "WHB cluster membership",
+          "description": "Cluster-to-cluster-annotation membership metadata CSV.",
+          "type": "data",
+          "required": false
+        },
+        "clustering_squidpy_broad_marker_lookup_path": {
+          "name": "Broad marker lookup",
+          "description": "Query-marker JSON used for hierarchical clustering broad annotation.",
+          "type": "data",
+          "required": false
+        },
+        "clustering_squidpy_broad_taxonomy_metadata_path": {
+          "name": "Broad taxonomy metadata",
+          "description": "Taxonomy metadata CSV for clustering broad annotation.",
+          "type": "data",
+          "required": false
+        },
+        "mapmycells_marker_lookup_path": {
+          "name": "MapMyCells marker lookup",
+          "description": "Whole-brain query-marker JSON for MapMyCells.",
+          "type": "data",
+          "required": false
+        },
+        "mapmycells_precomputed_stats_path": {
+          "name": "MapMyCells precomputed stats",
+          "description": "Precomputed reference statistics for MapMyCells.",
+          "type": "data",
+          "required": false
+        }
+      }
+    },
+    {
+      "name": "Analysis options",
+      "description": "Which downstream segmentation branches and optional stages run. These control which output directories are produced.",
+      "params": {
+        "analysis_segmentation": {
+          "name": "Analysis segmentation branches",
+          "description": "Downstream branch set. both=reseg,original_seg; all adds proseg_hybrid.",
+          "type": "string",
+          "valid": ["both", "all", "reseg", "original_seg", "proseg_hybrid"],
+          "default": "both",
+          "required": false
+        },
+        "enable_alignment": {
+          "name": "Enable alignment",
+          "description": "Register paired sections with Spateo (paired mode only).",
+          "type": "boolean",
+          "default": false,
+          "required": false
+        },
+        "mecr_enabled": {
+          "name": "Enable MECR",
+          "description": "Run mutually-exclusive co-expression rate analysis.",
+          "type": "boolean",
+          "default": true,
+          "required": false
+        },
+        "mask_image_quantification_enabled": {
+          "name": "Enable mask image quantification",
+          "type": "boolean",
+          "default": true,
+          "required": false
+        },
+        "viewer_cache_enabled": {
+          "name": "Enable viewer caches",
+          "type": "boolean",
+          "default": true,
+          "required": false
+        },
+        "spatial_gene_analysis_enabled": {
+          "name": "Enable spatial gene analysis",
+          "type": "boolean",
+          "default": true,
+          "required": false
+        },
+        "cortical_depth_enabled": {
+          "name": "Enable cortical depth",
+          "type": "boolean",
+          "default": false,
+          "required": false
+        },
+        "distance_from_object_enabled": {
+          "name": "Enable distance from object",
+          "type": "boolean",
+          "default": false,
+          "required": false
+        },
+        "start_stage": {
+          "name": "Start stage",
+          "description": "First stage to run.",
+          "type": "string",
+          "default": "build_spatialdata",
+          "required": false
+        },
+        "stop_stage": {
+          "name": "Stop stage",
+          "description": "Final stage to run.",
+          "type": "string",
+          "default": "clustering_squidpy",
+          "required": false
+        }
+      }
+    }
+  ],
+  "outputs": [
+    {
+      "name": "Source SpatialData",
+      "description": "Per-platform source SpatialData .zarr store built from raw data or symlinked from cache.",
+      "process": "BUILD_SPATIALDATA",
+      "filetype": ""
+    },
+    {
+      "name": "Segmentation",
+      "description": "Cellpose masks, ProSeg base SpatialData .zarr, and stitching diagnostics.",
+      "process": "PROSEG_SEGMENT",
+      "filetype": ""
+    },
+    {
+      "name": "Enrichment",
+      "description": "Per-shape assignment summaries and the updated latest SpatialData .zarr.",
+      "process": "ENRICH",
+      "filetype": ""
+    },
+    {
+      "name": "Viewer cache",
+      "description": "Napari viewer derived caches written into the latest SpatialData .zarr.",
+      "process": "VIEWER_CACHE",
+      "filetype": ""
+    },
+    {
+      "name": "Mask image quantification",
+      "description": "Per-channel Cellpose cell x image-stat matrices.",
+      "process": "MASK_IMAGE_QUANTIFICATION",
+      "filetype": ""
+    },
+    {
+      "name": "QC",
+      "description": "Per-dataset, per-segmentation QC metrics directory.",
+      "process": "QC",
+      "filetype": ""
+    },
+    {
+      "name": "MECR reference",
+      "description": "Shared whole-brain reference markers and statistics.",
+      "process": "MECR_REFERENCE",
+      "filetype": ""
+    },
+    {
+      "name": "MECR",
+      "description": "Per-pair, per-segmentation mutually-exclusive co-expression results.",
+      "process": "MECR",
+      "filetype": ""
+    },
+    {
+      "name": "Alignment",
+      "description": "Spateo alignment transform and centroid coordinate tables.",
+      "process": "ALIGN",
+      "filetype": ""
+    },
+    {
+      "name": "Alignment QC",
+      "description": "Alignment QC metrics and overlays.",
+      "process": "ALIGN_QC",
+      "filetype": ""
+    },
+    {
+      "name": "Comparison",
+      "description": "Paired MERSCOPE vs Xenium gene-count comparison tables.",
+      "process": "COMPARE",
+      "filetype": ""
+    },
+    {
+      "name": "Visualization",
+      "description": "Paired or single-platform visualisation plots.",
+      "process": "VISUALIZE",
+      "filetype": ""
+    },
+    {
+      "name": "Spatial gene analysis",
+      "description": "Spatial autocorrelation and transcript pattern outputs.",
+      "process": "SPATIAL_GENE_ANALYSIS",
+      "filetype": ""
+    },
+    {
+      "name": "Squidpy clustering",
+      "description": "Clustered AnnData, UMAP/spatial plots, and hierarchical annotation.",
+      "process": "CLUSTERING_SQUIDPY_FINALIZE",
+      "filetype": ""
+    },
+    {
+      "name": "Cortical depth",
+      "description": "Laplace/equivolumetric depth outputs (opt-in).",
+      "process": "COMPUTE_CORTICAL_DEPTH",
+      "filetype": ""
+    },
+    {
+      "name": "Distance from object",
+      "description": "Per-block nearest-object distance outputs (opt-in).",
+      "process": "DISTANCE_FROM_OBJECT_ANNOTATE",
+      "filetype": ""
+    },
+    {
+      "name": "Distance from object cohort",
+      "description": "Cohort paired near-vs-far differential expression (opt-in).",
+      "process": "DISTANCE_FROM_OBJECT_COHORT",
+      "filetype": ""
+    },
+    {
+      "name": "MapMyCells",
+      "description": "Per-cell cell-type assignments and QC (opt-in).",
+      "process": "MAPMYCELLS",
+      "filetype": ""
+    }
+  ]
+}
