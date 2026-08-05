@@ -26,9 +26,30 @@ tree — while doing no real computation, so we can iterate quickly on Flow
   `publishDir`, so Flow discovers outputs from process executions cannot target
   them anyway. Every `publishDir` directory output *is* reproduced.
 
+- **Input access is verified, not faked.** MerXen receives the raw
+  `merscope_dir`/`xenium_dir` as a *value* path (embedded in a config JSON, not
+  a Nextflow-staged `path()`) and its Python opens that absolute path directly.
+  So `BUILD_SPATIALDATA` reproduces the real input resolution
+  (`io/builders/pipeline.py`): it reads `input_path` from the config and **fails
+  the task** if that path is not an accessible directory, or — for a raw export
+  folder — if it lacks the files the builder reads (MERSCOPE: `images/`,
+  `micron_to_mosaic_pixel_transform.csv`, `cell_boundaries.parquet`,
+  `detected_transcripts.parquet|csv`; XENIUM: `experiment.xenium`/`specs.json`
+  and `transcripts.parquet`). A reusable `.zarr` cache path only needs to be a
+  directory. This is what makes the stub a real probe of Flow directory inputs:
+  if Flow doesn't mount the selected data path into the process container, or
+  the uploaded directory has the wrong structure, the stub fails exactly where a
+  real run would — it does not report a false success.
+
 Per FLOW-700, the pipeline code is not modified to accommodate Flow — only the
 schema (`flow/schema/merxen.json`) and the execution config a deployment
 supplies (see `test/local.config`).
+
+The equivalent access check is *not* yet applied to the file inputs consumed by
+later stages (MECR/clustering/MapMyCells reference paths, cortical-depth /
+distance GeoJSONs). Those are value paths too, so they carry the same
+container-mount risk; `main.nf`'s preflight checks their existence only on the
+launch node, not inside the process container.
 
 ## Layout
 
@@ -116,10 +137,17 @@ influence `publishDir`.
 ### Minimal first run
 
 Isolate directory handling from reference data with `stop_stage=enrich` and
-`mecr_enabled=false`: build → segment → enrich takes directory `.zarr` inputs
-and emits `.zarr`/`*_out` directories, needing only the raw MERSCOPE/Xenium
-directory inputs. Then add the reference `data` inputs, push `stop_stage` to
-`clustering_squidpy`, and finally enable the opt-in stages.
+`mecr_enabled=false`: build → segment → enrich needs only the raw
+MERSCOPE/Xenium directory inputs and emits `.zarr`/`*_out` directories. Then add
+the reference `data` inputs, push `stop_stage` to `clustering_squidpy`, and
+finally enable the opt-in stages.
+
+The uploaded directory must have the structure `BUILD_SPATIALDATA` checks (see
+"Input access is verified" above), or the run fails there **by design** — that
+failure is the signal that Flow either didn't mount the path or delivered the
+wrong structure. Use `test/inputs/merscope/EX01` and `test/inputs/xenium/EX01`
+as correctly-structured dummy directories to upload. A single-platform
+(`analysis_mode=xenium`) run needs just the one Xenium directory.
 
 ## Running the smoke test
 
