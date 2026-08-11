@@ -3,6 +3,18 @@
 A structural stub of [bourdenxlab/MerXen](https://github.com/bourdenxlab/MerXen)
 for validating Flow compatibility (FLOW-700).
 
+> **This branch (`mhusbynflow/flow-700-staged-path-inputs`) deliberately
+> deviates from MerXen** to demonstrate the upstream fix for containerised
+> execution: `main.nf` declares the raw MERSCOPE/Xenium input directories as
+> Nextflow `path` inputs to `BUILD_SPATIALDATA` (staged, so container runtimes
+> mount them) instead of passing them as bare strings inside the config JSON.
+> Verified locally under docker: the verbatim val-string version fails at
+> `BUILD_SPATIALDATA` with "input_path is not accessible" (identical to the
+> staging3 failure), the staged version runs clean. The same treatment would be
+> needed upstream for every other externally-supplied path (reference files,
+> annotation GeoJSONs, transform/spec overrides). The faithful-to-upstream
+> stub lives on `mhusbynflow/flow-700-pipeline-file-compat`.
+
 The aim is to reproduce MerXen's **shape** — the same processes, the same
 directory-typed inputs and outputs, the same `${outdir}/<pair_id>/<platform>/<stage>/`
 tree — while doing no real computation, so we can iterate quickly on Flow

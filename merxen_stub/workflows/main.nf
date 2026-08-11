@@ -1410,11 +1410,20 @@ workflow {
             settings.active_platforms.collect { platform ->
                 def key = "${pairId}|${platform}"
                 def buildConfig = buildConfigForPlatform(row, pairId, platform)
+                // Declare the raw input directory as a Nextflow path input so
+                // the executor stages it into the task and container runtimes
+                // mount it; a bare string path is invisible to Nextflow and is
+                // unreachable inside task containers. The config then refers to
+                // the staged name (basename kept, so the .zarr-suffix cache
+                // heuristic still works) instead of an absolute host path.
+                def rawInput = file(buildConfig.input_path)
+                buildConfig.input_path = rawInput.name
                 tuple(
                     key,
                     pairId,
                     platform,
                     groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(buildConfig)),
+                    rawInput,
                 )
             }
         }

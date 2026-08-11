@@ -4,7 +4,7 @@ process BUILD_SPATIALDATA {
     publishDir { "${params.outdir}/${pair_id}/${platform.toLowerCase()}/spatialdata" }, mode: "symlink", overwrite: true
 
     input:
-    tuple val(key), val(pair_id), val(platform), val(build_config_json)
+    tuple val(key), val(pair_id), val(platform), val(build_config_json), path(raw_input)
 
     output:
     tuple val(key), val(pair_id), val(platform), path("spatialdata_out/source_spatialdata.zarr")
@@ -30,7 +30,7 @@ JSON
     fi
     if [ ! -e "\${input_path}" ]; then
         echo "ERROR: ${platform} input_path is not accessible from this process: \${input_path}" >&2
-        echo "       (on Flow this usually means the data path is not mounted into the container)" >&2
+        echo "       (input_path is a staged Nextflow path input here, so this means staging failed to deliver it)" >&2
         exit 1
     fi
     if [ ! -d "\${input_path}" ]; then
