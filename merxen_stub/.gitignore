@@ -8,3 +8,5 @@ test/.nextflow*
 test/.samplesheet_*.csv
 .DS_Store
 **/.DS_Store
+test/.nfdocker*
+test/.ss_docker.csv
