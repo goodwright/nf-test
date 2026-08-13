@@ -4,7 +4,8 @@ process CLUSTERING_SQUIDPY_PREPARE {
     input:
     tuple val(pair_id),
         val(segmentation),
-        val(samples_json)
+        val(samples_json),
+        path(reference_files, stageAs: "clustering_refs/*")
 
     output:
     tuple val(pair_id),
@@ -16,6 +17,13 @@ process CLUSTERING_SQUIDPY_PREPARE {
     script:
     """
     set -euo pipefail
+    for ref in clustering_refs/*; do
+        if [ "\$ref" = "clustering_refs/*" ]; then break; fi
+        if [ ! -e "\$ref" ]; then
+            echo "ERROR: clustering reference not accessible from this process: \$ref" >&2
+            exit 1
+        fi
+    done
     echo '{"stub": "${pair_id} ${segmentation} clustering config"}' > clustering_squidpy_config.json
     mkdir -p clustering_prepare_out
     echo "stub prepared clustering input" > clustering_prepare_out/prepared.txt

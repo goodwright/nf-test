@@ -2229,7 +2229,20 @@ workflow {
     mecr_reference_inputs_ch = mecr_samples_ch
         .map { _pairId, _segmentation, samplesJson -> samplesJson }
         .collect()
-        .map { samplesJsonValues -> mergeMecrSamplesJson(samplesJsonValues) }
+        .map { samplesJsonValues ->
+            // Stage the reference files as Nextflow path inputs so container
+            // runtimes mount them; bare string paths in the config are
+            // unreachable inside task containers.
+            def referenceFiles = [
+                params.mecr_neurons_h5ad_path,
+                params.mecr_nonneurons_h5ad_path,
+                params.mecr_cell_metadata_path,
+                params.mecr_taxonomy_metadata_path,
+                params.mecr_cluster_membership_path,
+            ].findAll { rawPath -> !isBlankPath(rawPath) }
+                .collect { rawPath -> file(rawPath) }
+            tuple(mergeMecrSamplesJson(samplesJsonValues), referenceFiles)
+        }
     mecr_reference_results_ch = MECR_REFERENCE(mecr_reference_inputs_ch)
     mecr_inputs_ch = mecr_samples_ch
         .combine(mecr_reference_results_ch)
@@ -2682,11 +2695,23 @@ workflow {
             samplesJson,
             transcriptAnalysisEnabled,
             row ->
+            // Stage the annotation GeoJSONs so container runtimes mount them;
+            // the samples JSON alone only carries their paths as text. Blank
+            // columns (e.g. the absent platform in single-platform rows) are
+            // filtered out.
+            def annotationFiles = ["MERSCOPE", "XENIUM"].collectMany { platform ->
+                ["annotation", "pial", "wm", "side", "exclusion", "ribbon"]
+                    .collect { role -> corticalDepthAnnotationPath(row, platform, role) }
+            }
+                .findAll { rawPath -> !isBlankPath(rawPath) }
+                .unique()
+                .collect { rawPath -> file(rawPath) }
             tuple(
                 pairId,
                 segmentation,
                 spatialGeneSamplesJson(samplesJson, row),
                 transcriptAnalysisEnabled,
+                annotationFiles,
             )
         }
 
@@ -2740,7 +2765,21 @@ workflow {
             .mix(clustering_after_visualize_ch)
             .mix(clustering_after_spatial_gene_analysis_ch)
 
-    clustering_prepared_ch = CLUSTERING_SQUIDPY_PREPARE(clustering_inputs_ch)
+    clustering_inputs_with_refs_ch = clustering_inputs_ch.map {
+        pairId, segmentation, samplesJson ->
+            // Stage the broad-annotation reference files so container runtimes
+            // mount them; the config JSON alone only carries their paths as text.
+            def referenceFiles = [
+                params.clustering_squidpy_broad_marker_lookup_path,
+                params.clustering_squidpy_broad_taxonomy_metadata_path,
+                params.clustering_squidpy_broad_cluster_membership_path,
+                params.clustering_squidpy_broad_reference_cache_dir,
+            ].findAll { rawPath -> !isBlankPath(rawPath) }
+                .collect { rawPath -> file(rawPath) }
+            tuple(pairId, segmentation, samplesJson, referenceFiles)
+    }
+
+    clustering_prepared_ch = CLUSTERING_SQUIDPY_PREPARE(clustering_inputs_with_refs_ch)
     clustering_computed_ch = CLUSTERING_SQUIDPY_COMPUTE(clustering_prepared_ch)
     clustering_results_ch = CLUSTERING_SQUIDPY_FINALIZE(clustering_computed_ch)
 
@@ -2820,12 +2859,19 @@ workflow {
                 analysisSegmentations,
                 params,
             )
+            // Stage the annotation GeoJSONs so container runtimes mount them;
+            // the config JSON alone only carries their paths as text.
+            def annotationFiles = ["annotation", "pial", "wm", "side", "exclusion", "ribbon"]
+                .collect { role -> corticalDepthAnnotationPath(row, platform, role) }
+                .findAll { rawPath -> !isBlankPath(rawPath) }
+                .collect { rawPath -> file(rawPath) }
             tuple(
                 key,
                 pairId,
                 platform,
                 groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(depthConfig)),
                 latestZarr,
+                annotationFiles,
             )
         }
 
@@ -3062,5 +3108,18 @@ workflow {
 
     mapmycells_inputs_ch = mapmycells_from_clustering_ch.mix(mapmycells_published_ch)
 
-    MAPMYCELLS(mapmycells_inputs_ch)
+    mapmycells_inputs_with_refs_ch = mapmycells_inputs_ch.map {
+        pairId, segmentation, samplesJson, clusteringOut ->
+            // Stage the MapMyCells reference files so container runtimes mount
+            // them; the config JSON alone only carries their paths as text.
+            def referenceFiles = [
+                params.mapmycells_marker_lookup_path,
+                params.mapmycells_precomputed_stats_path,
+                params.mapmycells_region_cache_dir,
+            ].findAll { rawPath -> !isBlankPath(rawPath) }
+                .collect { rawPath -> file(rawPath) }
+            tuple(pairId, segmentation, samplesJson, clusteringOut, referenceFiles)
+    }
+
+    MAPMYCELLS(mapmycells_inputs_with_refs_ch)
 }

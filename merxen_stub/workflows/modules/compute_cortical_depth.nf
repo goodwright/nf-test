@@ -8,7 +8,8 @@ process COMPUTE_CORTICAL_DEPTH {
         val(pair_id),
         val(platform),
         val(cortical_depth_config_json),
-        path(latest_zarr)
+        path(latest_zarr),
+        path(annotation_files, stageAs: "annotations/*")
 
     output:
     tuple val(key),
@@ -20,6 +21,19 @@ process COMPUTE_CORTICAL_DEPTH {
     script:
     """
     set -euo pipefail
+    staged=0
+    for annotation in annotations/*; do
+        if [ "\$annotation" = "annotations/*" ]; then break; fi
+        if [ ! -e "\$annotation" ]; then
+            echo "ERROR: cortical-depth annotation not accessible from this process: \$annotation" >&2
+            exit 1
+        fi
+        staged=\$((staged + 1))
+    done
+    if [ "\$staged" -eq 0 ]; then
+        echo "ERROR: no cortical-depth annotation GeoJSONs were staged for ${pair_id}:${platform}" >&2
+        exit 1
+    fi
     if [[ ! -e latest_input.zarr ]]; then
         ln -s ${latest_zarr} latest_input.zarr
     fi

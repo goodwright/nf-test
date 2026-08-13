@@ -4,16 +4,30 @@ A structural stub of [bourdenxlab/MerXen](https://github.com/bourdenxlab/MerXen)
 for validating Flow compatibility (FLOW-700).
 
 > **This branch (`mhusbynflow/flow-700-staged-path-inputs`) deliberately
-> deviates from MerXen** to demonstrate the upstream fix for containerised
-> execution: `main.nf` declares the raw MERSCOPE/Xenium input directories as
-> Nextflow `path` inputs to `BUILD_SPATIALDATA` (staged, so container runtimes
-> mount them) instead of passing them as bare strings inside the config JSON.
-> Verified locally under docker: the verbatim val-string version fails at
-> `BUILD_SPATIALDATA` with "input_path is not accessible" (identical to the
-> staging3 failure), the staged version runs clean. The same treatment would be
-> needed upstream for every other externally-supplied path (reference files,
-> annotation GeoJSONs, transform/spec overrides). The faithful-to-upstream
-> stub lives on `mhusbynflow/flow-700-pipeline-file-compat`.
+> deviates from MerXen** to demonstrate the upstream fixes needed for
+> containerised execution. The faithful-to-upstream stub lives on
+> `mhusbynflow/flow-700-pipeline-file-compat`. Deviations:
+>
+> 1. **Staged path inputs.** `main.nf` declares externally-supplied paths as
+>    Nextflow `path` inputs (staged, so container runtimes mount them) instead
+>    of bare strings inside config JSONs: the raw MERSCOPE/Xenium directories
+>    (`BUILD_SPATIALDATA`), the MECR / clustering / MapMyCells reference files,
+>    and the cortical-depth / spatial-gene annotation GeoJSONs. Verified under
+>    docker: the val-string version fails "not accessible" (identical to the
+>    staging3 failure); the staged version runs clean. Not converted:
+>    `merscope_transform_path` / `xenium_spec_path` overrides (unused in tests).
+> 2. **Side-channel writes reproduced.** Real MerXen durably writes the latest
+>    zarr to an absolute path under `outdir`, outside `publishDir`, and later
+>    stages mutate it in place. `PROSEG_SEGMENT` now performs that write and
+>    `ENRICH` requires + updates it. Under docker this demonstrates the failure
+>    pair: the segment task's write lands inside its throwaway container
+>    filesystem and **silently vanishes** (task reports success), then `ENRICH`
+>    fails because the durable zarr never reached the host. On a shared
+>    filesystem (native runs) both succeed.
+> 3. **In-container access checks.** `VISUALIZE` verifies the zarr paths
+>    embedded as strings in `samples_json` are reachable (they resolve into the
+>    Nextflow work tree, which executors mount — this check turns that
+>    assumption into an observable).
 
 The aim is to reproduce MerXen's **shape** — the same processes, the same
 directory-typed inputs and outputs, the same `${outdir}/<pair_id>/<platform>/<stage>/`

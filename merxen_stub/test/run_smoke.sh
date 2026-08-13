@@ -41,8 +41,10 @@ ref_args=(
     --clustering_squidpy_broad_marker_lookup_path="$REFS/query_markers.json"
     --clustering_squidpy_broad_taxonomy_metadata_path="$REFS/whb_taxonomy.csv"
     --clustering_squidpy_broad_cluster_membership_path="$REFS/whb_cluster_membership.csv"
+    --clustering_squidpy_broad_reference_cache_dir="$REFS"
     --mapmycells_marker_lookup_path="$REFS/query_markers.json"
     --mapmycells_precomputed_stats_path="$REFS/precomputed_stats.h5"
+    --mapmycells_region_cache_dir="$REFS"
 )
 
 run_pipeline() {
@@ -82,6 +84,13 @@ if run_pipeline "$OUT_A" "$SS_A" --spatial_gene_analysis_transcript_analysis_ena
     assert_dir "$OUT_A/EX01/reseg/spatial_gene_analysis/spatial_gene_analysis_out"        "reseg spatial_gene_analysis_out dir"
     assert_dir "$OUT_A/EX01/reseg/clustering_squidpy/clustering_squidpy_out"              "reseg clustering_squidpy_out dir"
     assert_dir "$OUT_A/EX01/xenium/enrichment/latest_input.zarr"                          "XENIUM enrichment latest_input.zarr (symlinked dir)"
+    assert_dir "$OUT_A/EX01/merscope/latest/latest_spatialdata.zarr"                      "MERSCOPE persistent latest zarr (side-channel write)"
+    if grep -q "proseg_segment wrote" "$OUT_A/EX01/merscope/latest/latest_spatialdata.zarr/provenance.txt" 2>/dev/null \
+        && grep -q "enrich updated" "$OUT_A/EX01/merscope/latest/latest_spatialdata.zarr/provenance.txt" 2>/dev/null; then
+        report "PASS" "persistent zarr written by segment and updated in place by enrich"
+    else
+        report "FAIL" "persistent zarr written by segment and updated in place by enrich"
+    fi
 else
     report "FAIL" "pipeline runs with paired defaults"
 fi
