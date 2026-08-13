@@ -119,6 +119,21 @@ else
     report "FAIL" "pipeline runs with all opt-in stages"
 fi
 
+# ---------------------------------------------------------------------------
+echo ""
+echo "=== Test C: side-channel writes disabled ==="
+OUT_C="$TEST_DIR/results_c"
+if run_pipeline "$OUT_C" "$SS_A" --stop_stage enrich --mecr_enabled false --stub_side_channel_writes false; then
+    assert_dir "$OUT_C/EX01/merscope/enrichment/enrich_out" "enrich_out still produced"
+    if [ -e "$OUT_C/EX01/merscope/latest/latest_spatialdata.zarr" ]; then
+        report "FAIL" "no persistent latest zarr when side-channel disabled"
+    else
+        report "PASS" "no persistent latest zarr when side-channel disabled"
+    fi
+else
+    report "FAIL" "pipeline runs with side-channel writes disabled"
+fi
+
 rm -rf "$WORK"
 echo ""
 echo "=== Results: $PASS passed, $FAIL failed ==="

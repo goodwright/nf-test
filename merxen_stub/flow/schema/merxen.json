@@ -177,6 +177,13 @@
           "default": false,
           "required": false
         },
+        "stub_side_channel_writes": {
+          "name": "Side-channel writes",
+          "description": "Reproduce MerXen's durable writes to absolute outdir paths outside publishDir (segment writes the persistent latest zarr, enrich updates it in place). Disable for clean runs on executors where tasks cannot reach those paths.",
+          "type": "boolean",
+          "default": true,
+          "required": false
+        },
         "start_stage": {
           "name": "Start stage",
           "description": "First stage to run.",

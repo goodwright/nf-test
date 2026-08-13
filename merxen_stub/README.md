@@ -23,11 +23,18 @@ for validating Flow compatibility (FLOW-700).
 >    pair: the segment task's write lands inside its throwaway container
 >    filesystem and **silently vanishes** (task reports success), then `ENRICH`
 >    fails because the durable zarr never reached the host. On a shared
->    filesystem (native runs) both succeed.
+>    filesystem (native runs) both succeed. Toggleable via
+>    `--stub_side_channel_writes` (default `true`; the no-samples schema
+>    defaults it to `false` so dummy runs succeed on containerised executors).
 > 3. **In-container access checks.** `VISUALIZE` verifies the zarr paths
 >    embedded as strings in `samples_json` are reachable (they resolve into the
 >    Nextflow work tree, which executors mount — this check turns that
 >    assumption into an observable).
+> 4. **Manifest.** `nextflow.config` gains a `manifest` block (name, version,
+>    `nextflowVersion >= 26.04.0`) so provenance tooling has pipeline metadata —
+>    verified with nf-prov 1.7.0 (BCO output carries the manifest fields).
+>    Enable it from the runner, e.g. a config with `plugins { id 'nf-prov' }`
+>    and a `prov { }` block.
 
 The aim is to reproduce MerXen's **shape** — the same processes, the same
 directory-typed inputs and outputs, the same `${outdir}/<pair_id>/<platform>/<stage>/`

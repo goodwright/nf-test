@@ -21,17 +21,20 @@ JSON
     # outside publishDir. Require it and update it so environments where that
     # write did not survive (e.g. it landed inside a discarded task container)
     # fail here like the real pipeline.
-    persistent_zarr=\$(grep '"persistent_output_path"' enrich_config.json | head -1 | sed -E 's/.*": *"([^"]*)".*/\\1/')
-    if [ -z "\$persistent_zarr" ]; then
-        echo "ERROR: no persistent_output_path in enrich config for ${pair_id}:${platform}" >&2
-        exit 1
+    # Toggleable so runs can also complete on executors without that reach.
+    if [ "${params.stub_side_channel_writes}" = "true" ]; then
+        persistent_zarr=\$(grep '"persistent_output_path"' enrich_config.json | head -1 | sed -E 's/.*": *"([^"]*)".*/\\1/')
+        if [ -z "\$persistent_zarr" ]; then
+            echo "ERROR: no persistent_output_path in enrich config for ${pair_id}:${platform}" >&2
+            exit 1
+        fi
+        if [ ! -d "\$persistent_zarr" ]; then
+            echo "ERROR: persistent latest zarr missing: \$persistent_zarr" >&2
+            echo "       (the segmentation side-channel write did not survive — expected when tasks cannot reach outdir, or when a container discarded the write)" >&2
+            exit 1
+        fi
+        echo "enrich updated ${pair_id}_${platform}" >> "\$persistent_zarr/provenance.txt"
     fi
-    if [ ! -d "\$persistent_zarr" ]; then
-        echo "ERROR: persistent latest zarr missing: \$persistent_zarr" >&2
-        echo "       (the segmentation side-channel write did not survive — expected when tasks cannot reach outdir, or when a container discarded the write)" >&2
-        exit 1
-    fi
-    echo "enrich updated ${pair_id}_${platform}" >> "\$persistent_zarr/provenance.txt"
 
     ln -s ${latest_zarr} latest_input.zarr
     mkdir -p enrich_out

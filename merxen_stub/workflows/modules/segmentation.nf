@@ -65,18 +65,21 @@ JSON
     # absolute path under outdir, outside publishDir and invisible to Nextflow.
     # Reproduce it so environments where that path is unreachable from the task
     # (e.g. containers without the mount) fail here like the real pipeline.
-    persistent_zarr=\$(grep '"persistent_latest_zarr_path"' segment_config.json | head -1 | sed -E 's/.*": *"([^"]*)".*/\\1/')
-    if [ -z "\$persistent_zarr" ]; then
-        echo "ERROR: no persistent_latest_zarr_path in segment config for ${pair_id}:${platform}" >&2
-        exit 1
+    # Toggleable so runs can also complete on executors without that reach.
+    if [ "${params.stub_side_channel_writes}" = "true" ]; then
+        persistent_zarr=\$(grep '"persistent_latest_zarr_path"' segment_config.json | head -1 | sed -E 's/.*": *"([^"]*)".*/\\1/')
+        if [ -z "\$persistent_zarr" ]; then
+            echo "ERROR: no persistent_latest_zarr_path in segment config for ${pair_id}:${platform}" >&2
+            exit 1
+        fi
+        if ! mkdir -p "\$persistent_zarr"; then
+            echo "ERROR: cannot create persistent latest zarr at \$persistent_zarr" >&2
+            echo "       (side-channel write outside the work dir failed — expected when the task cannot reach outdir)" >&2
+            exit 1
+        fi
+        echo '{"stub": "${pair_id}_${platform} persistent latest spatialdata"}' > "\$persistent_zarr/.zattrs"
+        echo "proseg_segment wrote ${pair_id}_${platform}" >> "\$persistent_zarr/provenance.txt"
     fi
-    if ! mkdir -p "\$persistent_zarr"; then
-        echo "ERROR: cannot create persistent latest zarr at \$persistent_zarr" >&2
-        echo "       (side-channel write outside the work dir failed — expected when the task cannot reach outdir)" >&2
-        exit 1
-    fi
-    echo '{"stub": "${pair_id}_${platform} persistent latest spatialdata"}' > "\$persistent_zarr/.zattrs"
-    echo "proseg_segment wrote ${pair_id}_${platform}" >> "\$persistent_zarr/provenance.txt"
 
     mkdir -p segment_out/proseg_base_latest.zarr
     echo '{"stub": "${pair_id}_${platform} proseg base latest spatialdata"}' > segment_out/proseg_base_latest.zarr/.zattrs

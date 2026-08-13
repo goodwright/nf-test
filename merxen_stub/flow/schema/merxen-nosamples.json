@@ -65,6 +65,13 @@
           "valid": ["both", "all", "reseg", "original_seg", "proseg_hybrid"],
           "default": "both",
           "required": false
+        },
+        "stub_side_channel_writes": {
+          "name": "Side-channel writes",
+          "description": "Reproduce MerXen's durable writes to absolute outdir paths outside publishDir. Off by default here so dummy runs succeed on containerised executors; enable to observe the side-channel failure.",
+          "type": "boolean",
+          "default": false,
+          "required": false
         }
       }
     }
