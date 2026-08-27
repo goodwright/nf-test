@@ -52,8 +52,8 @@
   "outputs": [
     {
       "name": "Curated files",
-      "description": "Small text files from each generator process",
-      "filetype": "txt",
+      "description": "The declared outputs this schema names as curated; the process_* files are not.",
+      "filetype": "curated_.*\\.txt",
       "process": "GENERATE_FILES"
     },
     {
