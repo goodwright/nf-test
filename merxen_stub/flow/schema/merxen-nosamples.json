@@ -1,0 +1,92 @@
+{
+  "inputs": [
+    {
+      "name": "Samples",
+      "description": "One row per pair_id. No Flow samples required: type a pair_id and pick a directory for each platform. Raw inputs are directories; the stub treats them as opaque paths, so any directory works for a dummy run.",
+      "params": {
+        "samplesheet": {
+          "name": "Samplesheet",
+          "description": "CSV with one row per pair_id.",
+          "required": true,
+          "type": "csv",
+          "takes_samples": false,
+          "allow_custom_columns": true,
+          "columns": [
+            {
+              "name": "pair_id",
+              "type": "string",
+              "required": true,
+              "render": true
+            },
+            {
+              "name": "analysis_mode",
+              "type": "string",
+              "valid": ["paired", "merscope", "xenium"],
+              "required": false,
+              "render": true
+            },
+            {
+              "name": "merscope_dir",
+              "description": "Directory selected as data (required for paired/merscope modes).",
+              "type": "data",
+              "required": false,
+              "render": true
+            },
+            {
+              "name": "xenium_dir",
+              "description": "Directory selected as data (required for paired/xenium modes).",
+              "type": "data",
+              "required": false,
+              "render": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Analysis options",
+      "description": "For a dummy run, set Stop stage to 'enrich' and turn MECR off so no reference data is needed.",
+      "params": {
+        "stop_stage": {
+          "name": "Stop stage",
+          "type": "string",
+          "default": "enrich",
+          "required": false
+        },
+        "mecr_enabled": {
+          "name": "Enable MECR",
+          "type": "boolean",
+          "default": false,
+          "required": false
+        },
+        "analysis_segmentation": {
+          "name": "Analysis segmentation branches",
+          "type": "string",
+          "valid": ["both", "all", "reseg", "original_seg", "proseg_hybrid"],
+          "default": "both",
+          "required": false
+        }
+      }
+    }
+  ],
+  "outputs": [
+    {
+      "name": "Source SpatialData",
+      "description": "Per-platform source SpatialData .zarr store.",
+      "process": "BUILD_SPATIALDATA",
+      "filetype": ""
+    },
+    {
+      "name": "Segmentation",
+      "description": "Cellpose masks and ProSeg base SpatialData .zarr.",
+      "process": "PROSEG_SEGMENT",
+      "filetype": ""
+    },
+    {
+      "name": "Enrichment",
+      "description": "Per-shape assignment summaries and updated latest SpatialData .zarr.",
+      "process": "ENRICH",
+      "filetype": ""
+    }
+  ]
+}
